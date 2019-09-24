@@ -3,12 +3,24 @@ package org.acme.model.entities;
 import java.util.Date;
 import java.util.Objects;
 
+import javax.validation.constraints.AssertFalse;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+
 public class Todo {
+
   private int id;
+
   private String text;
+
+  @AssertFalse
   private boolean complete;
+
+  @AssertFalse
   private boolean delete;
+
   private Date createdAt;
+
   private Date updatedAt;
 
   public Todo() {
@@ -78,36 +90,6 @@ public class Todo {
 
   public void setUpdatedAt(Date updatedAt) {
     this.updatedAt = updatedAt;
-  }
-
-  public Todo id(int id) {
-    this.id = id;
-    return this;
-  }
-
-  public Todo text(String text) {
-    this.text = text;
-    return this;
-  }
-
-  public Todo complete(boolean complete) {
-    this.complete = complete;
-    return this;
-  }
-
-  public Todo delete(boolean delete) {
-    this.delete = delete;
-    return this;
-  }
-
-  public Todo createdAt(Date createdAt) {
-    this.createdAt = createdAt;
-    return this;
-  }
-
-  public Todo updatedAt(Date updatedAt) {
-    this.updatedAt = updatedAt;
-    return this;
   }
 
   @Override

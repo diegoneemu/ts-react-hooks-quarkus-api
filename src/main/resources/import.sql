@@ -1,0 +1,1 @@
+INSERT INTO users(id,name,email,permission,lng,active) VALUES(1,'Diego Augusto','professor.diegosilva@gmail.com','admin','pt-BR',false);

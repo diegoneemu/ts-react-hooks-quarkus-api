@@ -1,11 +1,18 @@
 package org.acme.rest.json;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.Date;
+import java.util.Arrays;
 
+import javax.inject.Inject;
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
+import javax.validation.Validator;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -17,11 +24,18 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.acme.model.entities.Todo;
+import org.acme.service.TodoService;
 
 @Path("/todo")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class TodoResource {
+
+    @Inject
+    Validator validator;
+
+    @Inject
+    TodoService todoService;
 
     private Set<Todo> todos = Collections.newSetFromMap(Collections.synchronizedMap(new LinkedHashMap<>()));
 
@@ -56,6 +70,31 @@ public class TodoResource {
     @POST
     public Response add(Todo todo) {
         todos.add(todo);
+
+        try {
+            todoService.validate(todo);
+
+            todoService.create(todo);
+        } catch (ConstraintViolationException e) {
+            ArrayList<ConstraintViolation<?>> violations = new ArrayList<>();
+
+            for (Iterator<ConstraintViolation<?>> ex = e.getConstraintViolations().iterator(); ex.hasNext();) {
+                ConstraintViolation<?> constraintViolation = ex.next();
+
+                violations.add(constraintViolation);
+            }
+
+            StringBuilder body = new StringBuilder();
+
+            violations.forEach(violation -> {
+                body.append("INVALID_TODO: ");
+                body.append(violation.getPropertyPath().toString());
+                body.append(violation.getMessage());
+            });
+
+            return Response.status(400).entity(body.toString()).build();
+        }
+
         return Response.ok().build();
     }
 
@@ -71,5 +110,38 @@ public class TodoResource {
         }
 
         return Response.status(400, "INVALID_TODO").build();
+    }
+
+    private String getFieldFromPath(String path) {
+        ArrayList<String> parts = new ArrayList<String>(Arrays.asList(path.split(".")));
+        System.out.println(path);
+        System.out.println(path.toString().split("."));
+        // return parts[parts.length];
+        return "";
+    }
+
+    private class Result {
+
+        Result(String message) {
+            this.success = true;
+            this.message = message;
+        }
+
+        Result(Set<? extends ConstraintViolation<?>> violations) {
+            this.success = false;
+            this.message = violations.stream().map(cv -> cv.getMessage()).collect(Collectors.joining(", "));
+        }
+
+        private String message;
+        private boolean success;
+
+        public String getMessage() {
+            return message;
+        }
+
+        public boolean isSuccess() {
+            return success;
+        }
+
     }
 }
